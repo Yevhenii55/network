@@ -1,0 +1,141 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    <style>
+        .post-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .pagination .btn {
+            margin-right: 5px;
+        }
+    </style>
+
+    <h2>Posts</h2>
+    {% for post in page %}
+        <div class="post-container">
+            <div class="post">
+                <p><strong>Author:</strong> {{ post.user.username }}</p>
+                <p><strong>Content:</strong> <span id="post-content-{{ post.id }}">{{ post.content }}</span></p>
+                <p><strong>Created at:</strong> {{ post.created_at }}</p>
+                <p><strong>Likes:</strong> {{ post.likes }}</p>
+                {% if user.is_authenticated and post.user == user %}
+                    <button class="btn btn-primary edit-post-btn" data-post-id="{{ post.id }}">Edit</button>
+                {% endif %}
+                <button class="btn btn-link heart-icon{% if post.is_liked %} liked{% endif %}" data-post-id="{{ post.id }}">
+                    <i class="fas fa-heart"></i>
+                </button>
+            </div>
+        </div>
+    {% empty %}
+        <p>No posts available.</p>
+    {% endfor %}
+
+    <div class="pagination">
+        {% if page.has_previous %}
+            <a href="?page={{ page.previous_page_number }}" class="btn btn-primary">Previous</a>
+        {% else %}
+            <span class="btn btn-primary disabled">Previous</span>
+        {% endif %}
+
+        <span class="page-number">
+            {% if page.has_previous and page.has_next %}
+                &nbsp;&nbsp;
+            {% endif %}
+
+            {% if page.has_next %}
+                <a href="?page={{ page.next_page_number }}" class="btn btn-primary">Next</a>
+            {% else %}
+                <span class="btn btn-primary disabled">Next</span>
+            {% endif %}
+
+            <span class="current-page">{{ page.number }}</span>
+        </span>
+    </div>
+<script>
+    document.querySelectorAll(".edit-post-btn").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                var postId = this.getAttribute("data-post-id");
+                var postContentElement = document.querySelector("#post-content-" + postId);
+                var postContent = postContentElement.innerHTML;
+
+                postContentElement.innerHTML = '<textarea class="form-control" rows="3">' + postContent + '</textarea>';
+
+                var saveButton = document.createElement("button");
+                saveButton.innerHTML = "Save";
+                saveButton.classList.add("btn", "btn-primary");
+                saveButton.setAttribute("data-post-id", postId);
+
+                var cancelButton = document.createElement("button");
+                cancelButton.innerHTML = "Cancel";
+                cancelButton.classList.add("btn", "btn-secondary");
+                cancelButton.setAttribute("data-post-id", postId);
+
+                saveButton.addEventListener("click", function () {
+                    var updatedContent = postContentElement.querySelector("textarea").value;
+                    console.log("Updated content:", updatedContent);
+
+                    postContentElement.innerHTML = updatedContent;
+                    postContentElement.parentNode.insertBefore(btn, postContentElement.nextSibling); // Show Edit button at the same level
+
+                    this.remove();
+                    cancelButton.remove();
+                });
+
+                cancelButton.addEventListener("click", function () {
+                    postContentElement.innerHTML = postContent;
+                    postContentElement.parentNode.insertBefore(btn, postContentElement.nextSibling); // Show Edit button at the same level
+
+                    this.remove();
+                    saveButton.remove();
+                });
+
+                this.parentNode.insertBefore(saveButton, postContentElement.nextSibling);
+                this.parentNode.insertBefore(cancelButton, postContentElement.nextSibling);
+                this.remove(); // Hide Edit button after clicking on it
+            });
+        });
+        function toggleLike(postId) {
+            var likesCountElement = document.querySelector("#likes-count-" + postId);
+            var heartIconElement = document.querySelector("[data-post-id='" + postId + "']");
+            var isLiked = heartIconElement.classList.contains("liked");
+
+            // Виконуємо асинхронний запит на сервер для зміни статусу лайка
+            fetch("/like/" + postId + "/", { method: "POST" })
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error("Network response was not ok.");
+                })
+                .then(function (data) {
+                    // Оновлюємо кількість лайків
+                    likesCountElement.textContent = data.likes;
+
+                    // Змінюємо стиль сердечка в залежності від статусу лайка
+                    if (data.is_liked) {
+                        heartIconElement.classList.add("liked");
+                    } else {
+                        heartIconElement.classList.remove("liked");
+                    }
+                })
+                .catch(function (error) {
+                    console.error("Error:", error);
+                });
+        }
+
+        document.querySelectorAll(".heart-icon").forEach(function (heartIcon) {
+            heartIcon.addEventListener("click", function () {
+                var postId = this.getAttribute("data-post-id");
+                toggleLike(postId);
+            });
+        });
+    </script>
+</script>
+                
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    <h1>Following</h1>
+
+    <style>
+        .post-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .pagination {
+            margin-top: 20px;
+        }
+
+        .pagination .btn {
+            margin-right: 5px;
+        }
+    </style>
+
+    <h2>Posts</h2>
+    {% for post in page %}
+        <div class="post-container">
+            <div class="post">
+                <p><strong>Author:</strong> <a href="{% url 'profile' post.user.username %}">{{ post.user.username }}</a></p>
+                <p><strong>Content:</strong> {{ post.content }}</p>
+                <p><strong>Created at:</strong> {{ post.created_at }}</p>
+                <p><strong>Likes:</strong> {{ post.likes }}</p>
+            </div>
+        </div>
+    {% empty %}
+        <p>No posts available.</p>
+    {% endfor %}
+
+    <div class="pagination">
+        {% if page.has_previous %}
+            <a href="?page={{ page.previous_page_number }}" class="btn btn-primary">Previous</a>
+        {% else %}
+            <span class="btn btn-primary disabled">Previous</span>
+        {% endif %}
+
+        <span class="page-number">
+            {% if page.has_previous and page.has_next %}
+                &nbsp;&nbsp;
+            {% endif %}
+
+            {% if page.has_next %}
+                <a href="?page={{ page.next_page_number }}" class="btn btn-primary">Next</a>
+            {% else %}
+                <span class="btn btn-primary disabled">Next</span>
+            {% endif %}
+
+            <span class="current-page">{{ page.number }}</span>
+        </span>
+    </div>
+         
+{% endblock %}

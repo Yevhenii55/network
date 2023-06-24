@@ -1,0 +1,26 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    <h1>Profile: {{ profile_user.username }}</h1>
+
+    <p><strong>Followers:</strong> {{ followers_count }}</p>
+    <p><strong>Following:</strong> {{ following_count }}</p>
+    {% if user != profile_user %}
+        {% if is_following %}
+            <a href="{% url 'unfollow_user' profile_user.username %}">Unfollow</a>
+        {% else %}
+            <a href="{% url 'follow_user' profile_user.username %}">Follow</a>
+        {% endif %}
+    {% endif %}
+
+    <h2>Posts</h2>
+    {% for post in posts %}
+        <div class="post post-item">
+            <p><strong>Author:</strong> {{ post.user.username }}</p>
+            <p><strong>Content:</strong> {{ post.content }}</p>
+            <p><strong>Created at:</strong> {{ post.created_at }}</p>
+            <p><strong>Likes:</strong> {{ post.likes }}</p>
+            <hr>  <!-- Додаємо розділюючу лінію -->
+        </div>
+    {% endfor %}
+{% endblock %}
